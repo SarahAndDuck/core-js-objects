@@ -347,34 +347,116 @@ function group(array, keySelector, valueSelector) {
  *
  *  For more examples see unit tests.
  */
-
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  selectorParts: [],
+  hasElement: false,
+  hasId: false,
+  hasPseudoClass: false,
+  lastSelector: 0,
+  element(value) {
+    if (this.hasElement) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    } else if (this.lastSelector > 1) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    } else {
+      const newBuilder = Object.create(this);
+      newBuilder.selectorParts = [...this.selectorParts, value];
+      newBuilder.hasElement = true;
+      newBuilder.lastSelector = 1;
+      return newBuilder;
+    }
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    if (this.hasId) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    } else if (this.lastSelector > 2) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    } else {
+      const newBuilder = Object.create(this);
+      newBuilder.selectorParts = [...this.selectorParts, `#${value}`];
+      newBuilder.hasId = true;
+      newBuilder.lastSelector = 2;
+      return newBuilder;
+    }
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    if (this.lastSelector > 3) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    } else {
+      const newBuilder = Object.create(this);
+      newBuilder.selectorParts = [...this.selectorParts, `.${value}`];
+      newBuilder.lastSelector = 3;
+      return newBuilder;
+    }
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    if (this.lastSelector > 4) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    } else {
+      const newBuilder = Object.create(this);
+      newBuilder.selectorParts = [...this.selectorParts, `[${value}]`];
+      newBuilder.lastSelector = 4;
+      return newBuilder;
+    }
+  },
+  pseudoClass(value) {
+    if (this.lastSelector > 5) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    } else {
+      const newBuilder = Object.create(this);
+      newBuilder.selectorParts = [...this.selectorParts, `:${value}`];
+      newBuilder.lastSelector = 5;
+      return newBuilder;
+    }
+  },
+  pseudoElement(value) {
+    if (this.hasPseudoClass) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    } else if (this.lastSelector > 6) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    } else {
+      const newBuilder = Object.create(this);
+      newBuilder.selectorParts = [...this.selectorParts, `::${value}`];
+      newBuilder.hasPseudoClass = true;
+      newBuilder.lastSelector = 6;
+      return newBuilder;
+    }
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
-  },
+  combine(selector1, combinator, selector2) {
+    const newBuilder = Object.create(this);
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
-  },
+    newBuilder.selectorParts = [
+      ...selector1.selectorParts,
+      ` ${combinator} `,
+      ...selector2.selectorParts,
+    ];
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+    return newBuilder;
+  },
+  stringify() {
+    return this.selectorParts.join('');
   },
 };
 
